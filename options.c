@@ -2061,6 +2061,16 @@ struct fio_option fio_options[FIO_MAX_OPTS] = {
 		.group	= FIO_OPT_G_INVALID,
 	},
 	{
+		.name	= "fill_quota",
+		.lname	= "Fill quota",
+		.type	= FIO_OPT_BOOL,
+		.off1	= offsetof(struct thread_options, fill_quota),
+		.help	= "Write until an EDQUOT error occurs",
+		.def	= "0",
+		.category = FIO_OPT_C_FILE,
+		.group	= FIO_OPT_G_INVALID,
+	},
+	{
 		.name	= "filesize",
 		.lname	= "File size",
 		.type	= FIO_OPT_STR_VAL,
