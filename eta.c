@@ -170,7 +170,7 @@ static unsigned long thread_eta(struct thread_data *td)
 	if (td->flags & TD_F_NO_PROGRESS)
 		return -1;
 
-	if (td->o.fill_device && td->o.size  == -1ULL) {
+	if ((td->o.fill_device || td->o.fill_quota) && td->o.size  == -1ULL) {
 		if (!td->fill_device_size || td->fill_device_size == -1ULL)
 			return 0;
 

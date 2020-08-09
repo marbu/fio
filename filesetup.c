@@ -57,7 +57,7 @@ static int native_fallocate(struct thread_data *td, struct fio_file *f)
 
 static void fallocate_file(struct thread_data *td, struct fio_file *f)
 {
-	if (td->o.fill_device)
+	if (td->o.fill_device || td->o.fill_quota)
 		return;
 
 	switch (td->o.fallocate_mode) {
@@ -187,7 +187,7 @@ static int extend_file(struct thread_data *td, struct fio_file *f)
 	 * The size will be -1ULL when fill_device is used, so don't truncate
 	 * or fallocate this file, just write it
 	 */
-	if (!td->o.fill_device) {
+	if (!td->o.fill_device && !td->o.fill_quota) {
 		dprint(FD_FILE, "truncate file %s, size %llu\n", f->file_name,
 					(unsigned long long) f->real_file_size);
 		if (ftruncate(f->fd, f->real_file_size) == -1) {
@@ -233,6 +233,10 @@ static int extend_file(struct thread_data *td, struct fio_file *f)
 						 "file, stopping\n");
 					break;
 				}
+				if (__e == EDQUOT) {
+					if (td->o.fill_quota)
+						break;
+				}
 				td_verror(td, errno, "write");
 			} else
 				td_verror(td, EIO, "write");
@@ -250,7 +254,7 @@ static int extend_file(struct thread_data *td, struct fio_file *f)
 			goto err;
 		}
 	}
-	if (td->o.fill_device && !td_write(td)) {
+	if ((td->o.fill_device || td->o.fill_quota) && !td_write(td)) {
 		fio_file_clear_size_known(f);
 		if (td_io_get_file_size(td, f))
 			goto err;
@@ -1044,14 +1048,15 @@ int setup_files(struct thread_data *td)
 			total_size += f->real_file_size;
 	}
 
-	if (o->fill_device)
+	if (o->fill_device || o->fill_quota)
 		td->fill_device_size = get_fs_free_counts(td);
 
 	/*
 	 * device/file sizes are zero and no size given, punt
 	 */
 	if ((!total_size || total_size == -1ULL) && !o->size &&
-	    !td_ioengine_flagged(td, FIO_NOIO) && !o->fill_device &&
+	    !td_ioengine_flagged(td, FIO_NOIO) &&
+	    !o->fill_device && !o->fill_quota &&
 	    !(o->nr_files && (o->file_size_low || o->file_size_high))) {
 		log_err("%s: you need to specify size=\n", o->name);
 		td_verror(td, EINVAL, "total_file_size");
@@ -1221,7 +1226,7 @@ int setup_files(struct thread_data *td)
 
 			assert(f->filetype == FIO_TYPE_FILE);
 			fio_file_clear_extend(f);
-			if (!o->fill_device) {
+			if (!o->fill_device && !o->fill_quota) {
 				old_len = f->real_file_size;
 				extend_len = f->io_size + f->file_offset -
 						old_len;
