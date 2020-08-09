@@ -347,6 +347,8 @@ struct thread_options {
 	unsigned int job_max_open_zones;
 	fio_fp64_t zrt;
 	fio_fp64_t zrf;
+
+	unsigned int fill_quota;
 };
 
 #define FIO_TOP_STR_MAX		256
@@ -633,6 +635,8 @@ struct thread_options_pack {
 	uint32_t allow_mounted_write;
 
 	uint32_t zone_mode;
+
+	uint32_t fill_quota;
 } __attribute__((packed));
 
 extern void convert_thread_options_to_cpu(struct thread_options *o, struct thread_options_pack *top);

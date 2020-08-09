@@ -394,7 +394,8 @@ static bool break_on_this_error(struct thread_data *td, enum fio_ddir ddir,
 			td_clear_error(td);
 			*retptr = 0;
 			return false;
-		} else if (td->o.fill_device && err == ENOSPC) {
+		} else if ((td->o.fill_device && err == ENOSPC) ||
+		           (td->o.fill_quota && err == EDQUOT)) {
 			/*
 			 * We expect to hit this error if
 			 * fill_device option is set.
@@ -1101,7 +1102,8 @@ reap:
 	if (td->trim_entries)
 		log_err("fio: %lu trim entries leaked?\n", td->trim_entries);
 
-	if (td->o.fill_device && td->error == ENOSPC) {
+	if ((td->o.fill_device && td->error == ENOSPC) ||
+	    (td->o.fill_quota && td->error == EDQUOT)) {
 		td->error = 0;
 		fio_mark_td_terminate(td);
 	}
@@ -1116,7 +1118,8 @@ reap:
 
 		if (i) {
 			ret = io_u_queued_complete(td, i);
-			if (td->o.fill_device && td->error == ENOSPC)
+			if ((td->o.fill_device && td->error == ENOSPC) ||
+			    (td->o.fill_quota && td->error == EDQUOT))
 				td->error = 0;
 		}
 

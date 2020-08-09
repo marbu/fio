@@ -1810,6 +1810,15 @@ I/O size
 	device node, since the size of that is already known by the file system.
 	Additionally, writing beyond end-of-device will not return ENOSPC there.
 
+.. option:: fill_quota=bool
+
+	Sets size to something really large and waits for EDQUOT (disk quota
+	exceeded) as the terminating condition. It is done in the same way as
+	:option:`fill_device` handles ENOSPC, so that the same assumptions and
+	limitations apply. If both options :option:`fill_device` and
+	:option:`fill_quota` are specified at the same time, fio will terminate
+	when either entire free space or quota is used, whichever comes first.
+
 
 I/O engine
 ~~~~~~~~~~

@@ -781,7 +781,7 @@ static int fixup_options(struct thread_data *td)
 		ret |= warnings_fatal;
 	}
 
-	if (o->fill_device && !o->size)
+	if ((o->fill_device || o->fill_quota) && !o->size)
 		o->size = -1ULL;
 
 	if (o->verify != VERIFY_NONE) {
