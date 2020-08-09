@@ -402,6 +402,14 @@ static bool break_on_this_error(struct thread_data *td, enum fio_ddir ddir,
 			td_clear_error(td);
 			fio_mark_td_terminate(td);
 			return true;
+		} else if (td->o.fill_device && err == EDQUOT) {
+			/*
+			 * We expect to hit this error if
+			 * fill_device option is set.
+			 */
+			td_clear_error(td);
+			fio_mark_td_terminate(td);
+			return true;
 		} else {
 			/*
 			 * Stop the I/O in case of a fatal
@@ -1105,6 +1113,10 @@ reap:
 		td->error = 0;
 		fio_mark_td_terminate(td);
 	}
+	if (td->o.fill_device && td->error == EDQUOT) {
+		td->error = 0;
+		fio_mark_td_terminate(td);
+	}
 	if (!td->error) {
 		struct fio_file *f;
 
@@ -1117,6 +1129,8 @@ reap:
 		if (i) {
 			ret = io_u_queued_complete(td, i);
 			if (td->o.fill_device && td->error == ENOSPC)
+				td->error = 0;
+			if (td->o.fill_device && td->error == EDQUOT)
 				td->error = 0;
 		}
 
