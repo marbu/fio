@@ -233,6 +233,10 @@ static int extend_file(struct thread_data *td, struct fio_file *f)
 						 "file, stopping\n");
 					break;
 				}
+				if (__e == EDQUOT) {
+					if (td->o.fill_device)
+						break;
+				}
 				td_verror(td, errno, "write");
 			} else
 				td_verror(td, EIO, "write");
