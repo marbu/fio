@@ -153,7 +153,7 @@ static struct fio_option options[] = {
 		.type     = FIO_OPT_STR_STORE,
 		.help     = "S3 region",
 		.off1     = offsetof(struct http_options, s3_region),
-		.def	  = "us-east-1",
+		.def	  = "",
 		.category = FIO_OPT_C_ENGINE,
 		.group    = FIO_OPT_G_HTTP,
 	},
@@ -377,12 +377,12 @@ static void _add_aws_auth_header(CURL *curl, struct curl_slist *slist, struct ht
 	, uri_encoded, o->host, dsha, date_iso, dsha);
 
 	csha = _gen_hex_sha256(creq, strlen(creq));
-	snprintf(sts, sizeof(sts), "AWS4-HMAC-SHA256\n%s\n%s/%s/%s/%s\n%s",
-		date_iso, date_short, o->s3_region, service, aws, csha);
+	snprintf(sts, sizeof(sts), "AWS4-HMAC-SHA256\n%s\n%s/%s/%s\n%s",
+		date_iso, date_short, service, aws, csha);
 
 	snprintf((char *)dkey, sizeof(dkey), "AWS4%s", o->s3_key);
 	_hmac(md, dkey, strlen(dkey), date_short);
-	_hmac(md, md, SHA256_DIGEST_LENGTH, o->s3_region);
+	/* _hmac(md, md, SHA256_DIGEST_LENGTH, o->s3_region); */
 	_hmac(md, md, SHA256_DIGEST_LENGTH, (char*) service);
 	_hmac(md, md, SHA256_DIGEST_LENGTH, (char*) aws);
 	_hmac(md, md, SHA256_DIGEST_LENGTH, sts);
@@ -398,9 +398,9 @@ static void _add_aws_auth_header(CURL *curl, struct curl_slist *slist, struct ht
 	snprintf(s, sizeof(s), "x-amz-date: %s", date_iso);
 	slist = curl_slist_append(slist, s);
 
-	snprintf(s, sizeof(s), "Authorization: AWS4-HMAC-SHA256 Credential=%s/%s/%s/s3/aws4_request,"
+	snprintf(s, sizeof(s), "Authorization: AWS4-HMAC-SHA256 Credential=%s/%s/s3/aws4_request,"
 	"SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=%s",
-	o->s3_keyid, date_short, o->s3_region, signature);
+	o->s3_keyid, date_short, signature);
 	slist = curl_slist_append(slist, s);
 
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist);
